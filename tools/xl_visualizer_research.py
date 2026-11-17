@@ -27,7 +27,7 @@ REPO_NOTES = [
     ("Menu patch engine", "tools/patch_menu.py"),
 ]
 
-EXPECTED_PRIOR_PAYLOAD_MD5 = "329e3a26d60d3de1988b6785fa833ee1"
+EXPECTED_PRIOR_HXF_MD5 = "329e3a26d60d3de1988b6785fa833ee1"
 
 
 def read_note(root, title, relative):
@@ -82,12 +82,12 @@ def main():
     add(f"- Verified decompressed payload MD5: `{payload_md5}`")
     add(f"- Entry 0 size: {len(entry0):,} bytes")
     add(f"- Entry 0 segments: {len(segments)}")
-    if payload_md5 == EXPECTED_PRIOR_PAYLOAD_MD5:
-        add("- Prior documented payload hash: MATCH.")
+    if file_md5 == EXPECTED_PRIOR_HXF_MD5:
+        add("- Prior documented HXF hash: MATCH.")
     else:
-        add("- Prior documented payload hash: DOES NOT MATCH.")
-        add(f"  - Earlier repository note lists `{EXPECTED_PRIOR_PAYLOAD_MD5}`.")
-        add("  - This is a provenance discrepancy to reconcile, not proof of modification.")
+        add("- Prior documented HXF hash: DOES NOT MATCH.")
+        add(f"  - Earlier repository note lists `{EXPECTED_PRIOR_HXF_MD5}` as the source-image hash.")
+        add("  - This is a source-image hash discrepancy to reconcile, not proof of modification.")
         add("  - Keep this exact file as the analysis input; do not substitute another build.")
     add("")
     add("## 2. Entry 0 memory map")
@@ -153,7 +153,7 @@ def main():
     add("")
     add("## 6. Recommended next research steps")
     add("")
-    add("1. Reconcile the payload hash against the known stock firmware source/version metadata. Do not infer modification from the mismatch alone.")
+    add("1. Confirm the full HXF hash against the known stock firmware source/version metadata; keep the container hash distinct from the decompressed payload hash.")
     add("2. Disassemble and compare the XL settings candidates and their callers; resolve getter/label variants and identify the XL settings table.")
     add("3. Trace XL view registration and paint functions independently, identifying Show View and Edit View boundaries.")
     add("4. Trace the XL SHARC receive/send frame path and locate a safe signal measurement point in the actual audio graph.")
