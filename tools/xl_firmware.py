@@ -76,8 +76,14 @@ def parse_segments(entry0):
             "end": address + length,
         })
         off = next_off
-    if off != len(entry0):
-        raise ValueError(f"Segment table ends at {off:#x}, Entry 0 ends at {len(entry0):#x}")
+    # Some XL images include one zero byte after the final segment. Accept
+    # that exact padding case, but reject any other unexplained trailing data.
+    trailing = entry0[off:]
+    if trailing and trailing != b"\x00":
+        raise ValueError(
+            f"Unexpected trailing data after segment table at {off:#x}: "
+            f"{trailing[:16].hex()} ({len(trailing)} bytes)"
+        )
     return segments
 
 
