@@ -76,13 +76,19 @@ export class AudioVisualizer {
 
   draw(ctx, { x, y, width, height, time = 0, labels = true, grid = true } = {}) {
     const bands = this.bandCount, gap = 1, barW = width / bands;
+    const midY = y + height / 2;
+    const halfH = height / 2;
     ctx.save();
     if (grid) {
       ctx.strokeStyle = '#12332f'; ctx.lineWidth = 1; ctx.globalAlpha = 0.8;
-      for (let row = 1; row <= 3; row++) {
-        const gy = y + height * row / 4;
+      // Frequency guide lines run vertically; the horizontal center line is the mirror axis.
+      for (let row = 1; row <= 2; row++) {
+        const gy = y + height * row / 3;
         ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + width, gy); ctx.stroke();
       }
+      ctx.globalAlpha = 0.95;
+      ctx.strokeStyle = '#28534e';
+      ctx.beginPath(); ctx.moveTo(x, midY); ctx.lineTo(x + width, midY); ctx.stroke();
       const marks = [60, 120, 250, 500, 1000, 2000, 4000, 8000];
       ctx.font = '10px system-ui'; ctx.fillStyle = '#52736f'; ctx.textAlign = 'center';
       for (const hz of marks) {
@@ -94,15 +100,18 @@ export class AudioVisualizer {
     }
     for (let i = 0; i < bands; i++) {
       const bx = x + i * barW + gap / 2;
-      const bh = this.levels[i] * height;
-      const by = y + height - bh;
-      ctx.fillStyle = '#007d70'; ctx.globalAlpha = 0.28;
-      ctx.fillRect(bx - 1, by - 2, Math.max(1, barW - gap + 2), bh + 3);
-      ctx.fillStyle = '#38d9c2'; ctx.globalAlpha = 0.92;
-      ctx.fillRect(bx, by, Math.max(1, barW - gap), bh);
-      const py = y + height - this.peaks[i] * height;
-      ctx.fillStyle = '#b9fff5'; ctx.globalAlpha = 0.8;
-      ctx.fillRect(bx, py - 1, Math.max(1, barW - gap), 2);
+      const bh = this.levels[i] * halfH;
+      const barWidth = Math.max(1, barW - gap);
+      // Each frequency band grows equally above and below the center axis.
+      ctx.fillStyle = '#007d70'; ctx.globalAlpha = 0.32;
+      ctx.fillRect(bx - 1, midY - bh - 2, barWidth + 2, bh * 2 + 4);
+      ctx.fillStyle = '#38d9c2'; ctx.globalAlpha = 0.94;
+      ctx.fillRect(bx, midY - bh, barWidth, bh);
+      ctx.fillRect(bx, midY, barWidth, bh);
+      const peakY = midY - this.peaks[i] * halfH;
+      ctx.fillStyle = '#b9fff5'; ctx.globalAlpha = 0.82;
+      ctx.fillRect(bx, peakY - 1, barWidth, 2);
+      ctx.fillRect(bx, midY + this.peaks[i] * halfH - 1, barWidth, 2);
     }
     ctx.restore();
   }
