@@ -1,129 +1,91 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HXtra XL — Audio Visualizer Preview</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HXtra XL — Audio Spectrum Visualizer</title>
 <style>
-:root{color-scheme:dark;--bg:#090d10;--panel:#11191d;--line:#26343a;--teal:#38d9c2;--muted:#9aadb2}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#14242a 0,#090d10 55%);color:#e8f1f2;font:15px/1.45 system-ui,sans-serif}
-main{max-width:1050px;margin:0 auto;padding:28px 20px 42px}h1{font-size:clamp(23px,4vw,34px);margin:0 0 5px;letter-spacing:.02em}.sub{color:var(--muted);margin:0 0 24px}
-.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.8fr);gap:18px;align-items:start}
-.panel{background:linear-gradient(160deg,#152126,#0e1519);border:1px solid var(--line);border-radius:15px;padding:17px;box-shadow:0 16px 42px #0005}
-.screen-wrap{background:#030607;border:1px solid #33444a;border-radius:12px;padding:12px;box-shadow:inset 0 0 24px #000}
-canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000;border-radius:3px;image-rendering:pixelated}
-.screen-caption{display:flex;justify-content:space-between;gap:12px;color:#82969c;font-size:12px;margin:10px 2px 0}
-h2{font-size:16px;margin:0 0 13px}.group{margin:0 0 17px}.group:last-child{margin-bottom:0}label{display:block;color:#b9c8cb;font-size:13px;margin:0 0 7px}
-select,input[type=range]{width:100%}select{background:#0a1114;color:#e8f1f2;border:1px solid #35464d;border-radius:8px;padding:10px;font:inherit}
-input[type=range]{accent-color:var(--teal)}.range-line{display:flex;justify-content:space-between;color:#9aadb2;font-size:12px}
-button{background:#1a2b30;color:#eaf7f5;border:1px solid #3a555b;border-radius:8px;padding:9px 12px;font:inherit;cursor:pointer}
-button:hover{border-color:var(--teal)}button.active{background:#123b38;border-color:var(--teal);color:#bffff5}
-.buttons{display:flex;flex-wrap:wrap;gap:7px}.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#0b1215;border:1px solid #293b41;border-radius:9px;padding:11px 12px}.toggle span{font-size:13px;color:#c3d0d2}.toggle input{width:18px;height:18px;accent-color:var(--teal)}
-.readout{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.metric{background:#0a1114;border:1px solid #24353a;border-radius:8px;padding:9px}.metric small{display:block;color:#83999e;font-size:11px}.metric strong{font-size:17px;font-variant-numeric:tabular-nums}
-.note{color:#8fa4a9;font-size:12px;margin:13px 0 0}.status{color:var(--teal);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
-@media(max-width:760px){.layout{grid-template-columns:1fr}main{padding:20px 13px}}
+:root{color-scheme:dark;--teal:#38d9c2;--glow:#007d70;--bg:#090d10;--panel:#11191d;--line:#26343a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#14242a,#090d10 58%);color:#e8f1f2;font:15px/1.45 system-ui,sans-serif}
+main{max-width:1080px;margin:auto;padding:26px 18px 40px}h1{font-size:clamp(23px,4vw,34px);margin:0 0 5px}.sub{color:#9aadb2;margin:0 0 22px}
+.layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,.8fr);gap:18px;align-items:start}.panel{background:linear-gradient(160deg,#152126,#0e1519);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 16px 42px #0005}
+.screen-wrap{background:#030607;border:1px solid #33444a;border-radius:11px;padding:10px}canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;background:#000}
+.caption{display:flex;justify-content:space-between;color:#82969c;font-size:12px;margin:9px 2px 0}h2{font-size:16px;margin:0 0 13px}.group{margin:0 0 16px}label{display:block;color:#b9c8cb;font-size:13px;margin-bottom:7px}
+select,input[type=range]{width:100%}select{background:#0a1114;color:#e8f1f2;border:1px solid #35464d;border-radius:8px;padding:9px;font:inherit}input[type=range]{accent-color:var(--teal)}
+.line{display:flex;justify-content:space-between;color:#9aadb2;font-size:12px}.toggle{display:flex;justify-content:space-between;align-items:center;background:#0b1215;border:1px solid #293b41;border-radius:9px;padding:11px 12px}.toggle span{font-size:13px}.toggle input{width:18px;height:18px;accent-color:var(--teal)}
+.buttons{display:flex;gap:8px}button{background:#1a2b30;color:#eaf7f5;border:1px solid #3a555b;border-radius:8px;padding:9px 12px;font:inherit;cursor:pointer}button.active{background:#123b38;border-color:var(--teal)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.metric{background:#0a1114;border:1px solid #24353a;border-radius:8px;padding:9px}.metric small{display:block;color:#83999e;font-size:11px}.metric strong{font-size:17px;font-variant-numeric:tabular-nums}
+.note{color:#8fa4a9;font-size:12px;margin:13px 0 0}@media(max-width:760px){.layout{grid-template-columns:1fr}main{padding:18px 12px}}
 </style>
 </head>
-<body>
-<main>
-<h1>HXtra XL · Audio Visualizer</h1>
-<p class="sub">A visual design and signal-behaviour sandbox. This is a screen preview, not firmware code.</p>
+<body><main>
+<h1>HXtra XL · Audio Spectrum Visualizer</h1>
+<p class="sub">A frequency-based visualizer prototype with a reusable analysis and rendering core.</p>
 <div class="layout">
+<section class="panel"><div class="screen-wrap"><canvas id="screen" width="640" height="480"></canvas></div><div class="caption"><span>320 × 240 screen mock-up · doubled</span><span id="viewStatus">SHOW VIEW</span></div></section>
 <section class="panel">
-<div class="screen-wrap"><canvas id="screen" width="640" height="480" aria-label="HX Stomp XL screen preview"></canvas></div>
-<div class="screen-caption"><span>320 × 240 screen mock-up · doubled for clarity</span><span id="viewStatus">SHOW VIEW</span></div>
-</section>
-<section class="panel">
-<h2>Preview controls</h2>
-<div class="group">
-<label>Test signal</label>
-<select id="signal">
-<option value="pluck">Guitar pluck</option><option value="sustain">Sustained guitar note</option><option value="chord">Chord-like signal</option><option value="white">White noise</option><option value="pink">Pink-ish noise</option><option value="sine">Sine wave</option><option value="pulse">Rhythmic pulses</option><option value="silence">Silence</option>
-</select>
-</div>
-<div class="group"><label>Signal level</label><input id="level" type="range" min="0" max="100" value="72"><div class="range-line"><span>Quiet</span><strong id="levelVal">72%</strong><span>Hot</span></div></div>
-<div class="group"><label>Visualizer sensitivity</label><input id="sensitivity" type="range" min="25" max="200" value="100"><div class="range-line"><span>Subtle</span><strong id="sensVal">100%</strong><span>Strong</span></div></div>
-<div class="group"><label>Waveform style</label><div class="buttons" id="styles"><button class="active" data-style="wave">Waveform</button><button data-style="bars">Bars</button><button data-style="mirror">Mirrored</button></div></div>
+<h2>Signal & display controls</h2>
+<div class="group"><label>Test signal</label><select id="signal">
+<option value="pluck">Guitar pluck</option><option value="sustain">Sustained guitar note</option><option value="chord">Chord-like signal</option><option value="white">White noise</option><option value="pink">Pink-ish noise</option><option value="sine">Sine wave</option><option value="pulse">Rhythmic pulses</option><option value="silence">Silence</option></select></div>
+<div class="group"><label>Signal level</label><input id="level" type="range" min="0" max="100" value="72"><div class="line"><span>Quiet</span><strong id="levelVal">72%</strong><span>Hot</span></div></div>
+<div class="group"><label>Visualizer sensitivity</label><input id="sensitivity" type="range" min="25" max="200" value="100"><div class="line"><span>Subtle</span><strong id="sensVal">100%</strong><span>Strong</span></div></div>
 <div class="group"><label>Screen view</label><div class="buttons"><button class="active" id="showBtn">Show View</button><button id="editBtn">Edit View</button></div></div>
 <div class="group toggle"><span>Global Audio Visualizer</span><input id="enabled" type="checkbox" checked></div>
-<div class="readout"><div class="metric"><small>INPUT LEVEL (SIMULATED)</small><strong id="meter">— dB</strong></div><div class="metric"><small>VISUALIZER STATE</small><strong id="state">ON</strong></div></div>
-<p class="note">Generated test signals stay inside the browser and are not played through your speakers. Select White noise to test a busy, broadband waveform; Silence checks the decay and idle appearance.</p>
-</section>
-</div>
-</main>
-<script>
-const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
-const $=id=>document.getElementById(id);
-let style='wave',view='show',enabled=true,phase=0,env=0,level=0.72,sensitivity=1;
-const N=240, samples=new Float32Array(N), pinkState=new Float32Array(7);
-function signal(t,i){
- const amp=level, kind=$('signal').value;
- if(kind==='silence')return 0;
- if(kind==='sine')return amp*Math.sin(t*2*Math.PI*4);
- if(kind==='white')return amp*(Math.random()*2-1)*.82;
- if(kind==='pink'){
-   let w=Math.random()*2-1; pinkState[0]=.99886*pinkState[0]+w*.0555179;pinkState[1]=.99332*pinkState[1]+w*.0750759;pinkState[2]=.969*pinkState[2]+w*.153852;pinkState[3]=.8665*pinkState[3]+w*.3104856;pinkState[4]=.55*pinkState[4]+w*.5329522;pinkState[5]=-0.7616*pinkState[5]-w*.016898;return amp*(pinkState.reduce((a,b)=>a+b,0)+pinkState[6]+w*.5362)*.11;
+<div class="metrics"><div class="metric"><small>INPUT LEVEL (SIMULATED)</small><strong id="meter">— dB</strong></div><div class="metric"><small>VISUALIZER STATE</small><strong id="state">ON</strong></div></div>
+<p class="note">Bass frequencies are on the left; treble frequencies are on the right. The horizontal scale is logarithmic, like an audio EQ. Generated signals stay in the browser and are not played through your speakers. This prototype includes both a reusable FFT/spectrum engine and a simulated input adapter; the eventual firmware adapter can feed it measured audio-spectrum data.</p>
+</section></div></main>
+<script type="module">
+import { AudioVisualizer } from './visualizer-core.js';
+const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d'),$=id=>document.getElementById(id);
+const visualizer=new AudioVisualizer({bands:48,minHz:45,maxHz:16000});
+let view='show',enabled=true,phase=0,level=.72,sensitivity=1,last=performance.now(),pink=[0,0,0,0,0,0,0];
+function makePcm(){
+ const n=1024,sr=48000,out=new Float32Array(n),kind=$('signal').value;
+ const freqs=kind==='chord'?[82.4,110,164.8,220,329.6]:kind==='sustain'?[110,220,330]:[110,220];
+ for(let i=0;i<n;i++){
+  const t=phase+i/sr;let v=0;
+  if(kind==='silence')v=0;
+  else if(kind==='sine')v=Math.sin(2*Math.PI*220*t);
+  else if(kind==='white')v=(Math.random()*2-1)*.8;
+  else if(kind==='pink'){
+   const w=Math.random()*2-1;pink[0]=.99886*pink[0]+w*.0555179;pink[1]=.99332*pink[1]+w*.0750759;pink[2]=.969*pink[2]+w*.153852;pink[3]=.8665*pink[3]+w*.3104856;pink[4]=.55*pink[4]+w*.5329522;pink[5]=-.7616*pink[5]-w*.016898;v=(pink.reduce((a,b)=>a+b,0)+pink[6]+w*.5362)*.11;
+  }else if(kind==='pulse'){v=(Math.sin(2*Math.PI*2*t)>0.65?Math.sin(2*Math.PI*110*t):0);}
+  else {for(let j=0;j<freqs.length;j++)v+=Math.sin(2*Math.PI*freqs[j]*t)/(freqs.length*(j+1)*.65);if(kind==='pluck')v*=Math.exp(-((phase%1.8))*2.1);}
+  out[i]=v*level*.8;
  }
- if(kind==='pulse'){let p=(t%1);return p<.22?amp*Math.sin(p/0.22*Math.PI*7)*.75:0}
- if(kind==='pluck'){let e=Math.exp(-((t%2.1))*2.9);return amp*e*(Math.sin(t*2*Math.PI*5.2)+.35*Math.sin(t*2*Math.PI*8.1))*.48}
- if(kind==='sustain')return amp*(.65*Math.sin(t*2*Math.PI*4.7)+.22*Math.sin(t*2*Math.PI*7.1)+.12*Math.sin(t*2*Math.PI*9.4));
- return amp*(.38*Math.sin(t*2*Math.PI*3.1)+.28*Math.sin(t*2*Math.PI*4.7)+.2*Math.sin(t*2*Math.PI*6.2)+.12*Math.sin(t*2*Math.PI*8.3));
+ phase+=n/sr;return out;
 }
-function drawScreen(){
+function draw(){
  ctx.fillStyle='#050708';ctx.fillRect(0,0,640,480);
- // HX-style top strip and preset information
- ctx.fillStyle='#101719';ctx.fillRect(0,0,640,70);
- ctx.fillStyle='#d9e4e5';ctx.font='bold 22px system-ui';ctx.fillText('12A',22,31);
- ctx.fillStyle='#8ea2a6';ctx.font='18px system-ui';ctx.fillText('GLASS HORIZON',95,31);
- ctx.fillStyle='#38d9c2';ctx.font='bold 15px system-ui';ctx.fillText('HXtra XL',510,28);
- ctx.fillStyle='#687b80';ctx.font='13px system-ui';ctx.fillText(view==='show'?'SHOW':'EDIT',550,51);
- // signal chain row
- const blocks=['IN','GATE','OD','AMP','CAB','DLY','VERB'];
- let x=38;blocks.forEach((b,i)=>{ctx.fillStyle=i===3?'#234a48':'#202a2e';ctx.fillRect(x,86,66,38);ctx.strokeStyle=i===3?'#38d9c2':'#53646a';ctx.strokeRect(x,86,66,38);ctx.fillStyle='#d4e1e2';ctx.font='bold 14px system-ui';ctx.fillText(b,x+14,110);x+=82});
- ctx.fillStyle='#89999d';ctx.font='14px system-ui';ctx.fillText(view==='show'?'SNAPSHOTS':'PARAMETERS',24,164);
+ ctx.fillStyle='#101719';ctx.fillRect(0,0,640,64);
+ ctx.fillStyle='#d9e4e5';ctx.font='bold 22px system-ui';ctx.fillText('12A',20,29);
+ ctx.fillStyle='#8ea2a6';ctx.font='18px system-ui';ctx.fillText('GLASS HORIZON',90,29);
+ ctx.fillStyle='#38d9c2';ctx.font='bold 15px system-ui';ctx.fillText('HXtra XL',515,27);
+ ctx.fillStyle='#687b80';ctx.font='13px system-ui';ctx.fillText(view.toUpperCase(),548,48);
+ const blocks=['IN','GATE','OD','AMP','CAB','DLY','VERB'];let x=28;
+ blocks.forEach((b,i)=>{ctx.fillStyle=i===3?'#234a48':'#202a2e';ctx.fillRect(x,77,70,34);ctx.strokeStyle=i===3?'#38d9c2':'#53646a';ctx.strokeRect(x,77,70,34);ctx.fillStyle='#d4e1e2';ctx.font='bold 13px system-ui';ctx.fillText(b,x+20,99);x+=83});
  if(view==='show'){
-   ['CLEAN','CRUNCH','LEAD','AMBIENT'].forEach((s,i)=>{let xx=24+i*151;ctx.fillStyle=i===1?'#173b37':'#182126';ctx.fillRect(xx,180,136,47);ctx.strokeStyle=i===1?'#38d9c2':'#425157';ctx.strokeRect(xx,180,136,47);ctx.fillStyle='#e3eeee';ctx.font='bold 16px system-ui';ctx.fillText(s,xx+14,209)});
-   ctx.fillStyle='#65777c';ctx.font='12px system-ui';ctx.fillText('FS1',45,258);ctx.fillText('FS2',195,258);ctx.fillText('FS3',345,258);ctx.fillText('FS4',495,258);
+  ctx.fillStyle='#89999d';ctx.font='13px system-ui';ctx.fillText('SNAPSHOTS',22,143);
+  ['CLEAN','CRUNCH','LEAD','AMBIENT'].forEach((s,i)=>{let xx=22+i*151;ctx.fillStyle=i===1?'#173b37':'#182126';ctx.fillRect(xx,153,137,38);ctx.strokeStyle=i===1?'#38d9c2':'#425157';ctx.strokeRect(xx,153,137,38);ctx.fillStyle='#e3eeee';ctx.font='bold 14px system-ui';ctx.fillText(s,xx+13,177)});
+  ctx.fillStyle='#65777c';ctx.font='11px system-ui';['FS1','FS2','FS3','FS4'].forEach((s,i)=>ctx.fillText(s,47+i*151,208));
+  if(enabled){
+   ctx.fillStyle='#007d70';ctx.globalAlpha=.13;ctx.fillRect(25,230,590,164);ctx.globalAlpha=1;
+   ctx.fillStyle='#9bb5b3';ctx.font='11px system-ui';ctx.fillText('dB',25,246);
+   visualizer.draw(ctx,{x:34,y:255,width:572,height:116,labels:true,grid:true});
+   ctx.fillStyle='#38d9c2';ctx.font='11px system-ui';ctx.fillText('BASS',34,393);ctx.textAlign='right';ctx.fillText('TREBLE',606,393);ctx.textAlign='left';
+  }else{ctx.fillStyle='#526166';ctx.font='13px system-ui';ctx.fillText('AUDIO VISUALIZER OFF',24,315)}
  }else{
-   ctx.fillStyle='#d5e0e1';ctx.font='17px system-ui';ctx.fillText('Amp parameters',25,197);ctx.fillStyle='#71858a';ctx.font='14px system-ui';ctx.fillText('Drive     Bass     Mid     Treble     Presence',25,228);
+  ctx.fillStyle='#d5e0e1';ctx.font='17px system-ui';ctx.fillText('Amp parameters',25,166);ctx.fillStyle='#71858a';ctx.font='14px system-ui';ctx.fillText('Drive     Bass     Mid     Treble     Presence',25,196);
  }
- // visualizer overlay lives only in Show View
- if(view==='show'&&enabled){
-   const cy=330, width=560,left=40, scale=104*sensitivity;
-   ctx.save();ctx.beginPath();ctx.rect(20,275,600,125);ctx.clip();
-   ctx.fillStyle='#007d70';ctx.globalAlpha=.12;ctx.fillRect(left,cy-42,width,84);
-   ctx.shadowColor='#007d70';ctx.shadowBlur=22;ctx.strokeStyle='#007d70';ctx.lineWidth=8;ctx.globalAlpha=.36;wavePath(left,cy,scale);ctx.stroke();
-   ctx.shadowBlur=7;ctx.strokeStyle='#38d9c2';ctx.lineWidth=2.6;ctx.globalAlpha=1;
-   if(style==='bars'){
-     for(let i=0;i<N;i+=3){let h=Math.abs(samples[i])*scale;ctx.fillStyle='#38d9c2';ctx.globalAlpha=.82;ctx.fillRect(left+i*width/N,cy-h,2.8,Math.max(2,h*2))}
-   }else if(style==='mirror'){
-     ctx.beginPath();for(let i=0;i<N;i++){let xx=left+i*width/N,yy=samples[i]*scale; if(i===0)ctx.moveTo(xx,cy-yy);else ctx.lineTo(xx,cy-yy)}ctx.stroke();
-     ctx.globalAlpha=.45;ctx.beginPath();for(let i=0;i<N;i++){let xx=left+i*width/N,yy=samples[i]*scale;if(i===0)ctx.moveTo(xx,cy+yy);else ctx.lineTo(xx,cy+yy)}ctx.stroke();
-   }else wavePath(left,cy,scale),ctx.stroke();
-   ctx.restore();
-   ctx.fillStyle='#38d9c2';ctx.globalAlpha=.8;ctx.font='12px system-ui';ctx.fillText('AUDIO',24,416);ctx.globalAlpha=1;
- }else if(view==='show'){
-   ctx.fillStyle='#526166';ctx.font='13px system-ui';ctx.fillText('AUDIO VISUALIZER OFF',24,345);
- }
- // footer
- ctx.fillStyle='#11191c';ctx.fillRect(0,438,640,42);ctx.fillStyle='#6e8287';ctx.font='13px system-ui';ctx.fillText('HXtra XL  ·  PREVIEW BUILD',22,464);
- ctx.fillStyle='#38d9c2';ctx.fillRect(600,451,14,14);
+ ctx.fillStyle='#11191c';ctx.fillRect(0,438,640,42);ctx.fillStyle='#6e8287';ctx.font='13px system-ui';ctx.fillText('HXtra XL  ·  SPECTRUM PREVIEW',22,464);
 }
-function wavePath(left,cy,scale){ctx.beginPath();for(let i=0;i<N;i++){let x=left+i*560/N,y=cy-samples[i]*scale;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}}
-let last=performance.now();
-function frame(now){let dt=Math.min(.05,(now-last)/1000);last=now;phase+=dt;
- let sum=0;for(let i=0;i<N;i++){let t=phase+i/N*.18;let v=signal(t,i);samples[i]=v;sum+=v*v}
- let rms=Math.sqrt(sum/N);env+=(rms-env)*(rms>env?.42:.08);
- let db=env>0?20*Math.log10(env):-90;$('meter').textContent=db<-89?'−∞ dB':db.toFixed(1)+' dB';
- drawScreen();requestAnimationFrame(frame)}
-$('signal').addEventListener('change',()=>{phase=0});
-$('level').addEventListener('input',e=>{level=e.target.value/100;$('levelVal').textContent=e.target.value+'%'});
-$('sensitivity').addEventListener('input',e=>{sensitivity=e.target.value/100;$('sensVal').textContent=e.target.value+'%'});
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const pcm=makePcm();visualizer.analysePcm(pcm,48000);visualizer.update(dt,sensitivity);
+ const rms=Math.sqrt(pcm.reduce((a,v)=>a+v*v,0)/pcm.length);const db=rms>0?20*Math.log10(rms):-Infinity;$('meter').textContent=Number.isFinite(db)?db.toFixed(1)+' dB':'−∞ dB';
+ draw();requestAnimationFrame(frame)}
+$('level').addEventListener('input',e=>{level=+e.target.value/100;$('levelVal').textContent=e.target.value+'%'});
+$('sensitivity').addEventListener('input',e=>{sensitivity=+e.target.value/100;$('sensVal').textContent=e.target.value+'%'});
 $('enabled').addEventListener('change',e=>{enabled=e.target.checked;$('state').textContent=enabled?'ON':'OFF'});
-$('styles').addEventListener('click',e=>{if(e.target.dataset.style){style=e.target.dataset.style;document.querySelectorAll('#styles button').forEach(b=>b.classList.toggle('active',b===e.target))}});
-function setView(v){view=v;$('showBtn').classList.toggle('active',v==='show');$('editBtn').classList.toggle('active',v==='edit');$('viewStatus').textContent=v==='show'?'SHOW VIEW':'EDIT VIEW'}
+$('signal').addEventListener('change',()=>{phase=0;pink.fill(0)});
+function setView(v){view=v;$('showBtn').classList.toggle('active',v==='show');$('editBtn').classList.toggle('active',v==='edit');$('viewStatus').textContent=v.toUpperCase()+' VIEW'}
 $('showBtn').onclick=()=>setView('show');$('editBtn').onclick=()=>setView('edit');
 requestAnimationFrame(frame);
-</script>
-</body>
-</html>
+</script></body></html>
