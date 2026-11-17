@@ -95,6 +95,26 @@ def scan_segment(entry0, segment, signature):
     return matches
 
 
+
+def thumb_bl_targets(code, base):
+    """Return direct Thumb-2 BL call sites grouped by absolute target address."""
+    calls = {}
+    halfwords = struct.unpack(f"<{len(code) // 2}H", code[:len(code) // 2 * 2])
+    for i in range(len(halfwords) - 1):
+        first, second = halfwords[i], halfwords[i + 1]
+        if first & 0xF800 != 0xF000 or second & 0xD000 != 0xD000:
+            continue
+        sign = (first >> 10) & 1
+        offset = ((sign << 24)
+                  | ((1 - (((second >> 13) & 1) ^ sign)) << 23)
+                  | ((1 - (((second >> 11) & 1) ^ sign)) << 22)
+                  | ((first & 0x3FF) << 12)
+                  | ((second & 0x7FF) << 1))
+        target = base + 2 * i + 4 + offset - (sign << 25)
+        calls.setdefault(target & ~1, []).append(base + 2 * i)
+    return calls
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("stock_hxf", help="official stock HX Stomp XL .hxf file")
@@ -111,12 +131,27 @@ def main():
         )
 
     print("\nKnown HXtra settings signatures (XL matches are candidates):")
+    matches_by_name = {}
     for name, signature in SIGNATURES.items():
         matches = []
         for seg in segments:
             matches.extend(scan_segment(entry0, seg, signature))
+        matches_by_name[name] = matches
         formatted = ", ".join(f"{address:#010x}" for address in matches) or "no match"
         print(f"  {name}: {formatted}")
+
+    # Direct BL callers help distinguish duplicate prologues. Literal-loaded
+    # BLX calls are deliberately not inferred by this first-pass scanner.
+    code_seg = next((s for s in segments if s["address"] == 0x28D92230), None)
+    if code_seg is not None:
+        code = entry0[code_seg["file_offset"]:code_seg["file_offset"] + code_seg["length"]]
+        callers = thumb_bl_targets(code, code_seg["address"])
+        print("\nDirect Thumb BL callers of settings candidates:")
+        for name, matches in matches_by_name.items():
+            for target in matches:
+                sites = callers.get(target & ~1, [])
+                formatted = ", ".join(f"{site:#010x}" for site in sites) or "none found"
+                print(f"  {name} {target:#010x}: {formatted}")
 
 
 if __name__ == "__main__":
