@@ -5,7 +5,7 @@ Status tags: **[verified offline]** means checked against the user's supplied st
 ## Source image
 
 - Product: HX Stomp XL 3.80.0
-- User-supplied stock HXF payload MD5: `329e3a26d60d3de1988b6785fa833ee1`
+- User-supplied stock HXF container MD5: `329e3a26d60d3de1988b6785fa833ee1` (verified against the supplied file)\n- Decompressed Entry 0 payload MD5: `c09c2ab9b57c98491523d28be1b082eb`
 - Entry 0: LPC43xx main application, Cortex-M4, 7 segments
 - The original stock HXF is user-owned and is not stored in this repository.
 
@@ -42,4 +42,4 @@ A large zero-filled run exists in segment 6, beginning at `0x28E34344` and measu
 
 ## Analysis tooling
 
-`tools/xl_firmware.py` is a read-only mapper. It verifies the HXF payload against the embedded size and MD5, parses Entry 0's segment table, and scans the known settings signatures. It does not modify or emit firmware.
+`tools/xl_firmware.py` is a read-only mapper. It verifies the decompressed HXF payload against its embedded size and MD5, parses Entry 0's segment table, and scans the known settings signatures. The supplied stock container's full-file MD5 is `329e3a26d60d3de1988b6785fa833ee1`; its decompressed payload MD5 is `c09c2ab9b57c98491523d28be1b082eb`. These are different hash scopes and must not be compared as if they were the same value. The tool does not modify or emit firmware.
