@@ -74,44 +74,67 @@ export class AudioVisualizer {
     }
   }
 
-  draw(ctx, { x, y, width, height, time = 0, labels = true, grid = true } = {}) {
-    const bands = this.bandCount, gap = 1, barW = width / bands;
-    const midY = y + height / 2;
-    const halfH = height / 2;
+  draw(ctx, { x, y, width, height, time = 0, labels = false, grid = false } = {}) {
+    const bands = this.bandCount;
+    const midY = y + height * 0.48;
+    const halfH = Math.min(height * 0.44, midY - y);
+    const slotW = width / bands;
+    const barW = Math.max(2, slotW * 0.68);
+    const segmentGap = 2;
+    const segmentH = 4;
+    const maxSegments = Math.max(1, Math.floor(halfH / (segmentH + segmentGap)));
+
     ctx.save();
-    if (grid) {
-      ctx.strokeStyle = '#12332f'; ctx.lineWidth = 1; ctx.globalAlpha = 0.8;
-      // Frequency guide lines run vertically; the horizontal center line is the mirror axis.
-      for (let row = 1; row <= 2; row++) {
-        const gy = y + height * row / 3;
-        ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + width, gy); ctx.stroke();
-      }
-      ctx.globalAlpha = 0.95;
-      ctx.strokeStyle = '#28534e';
-      ctx.beginPath(); ctx.moveTo(x, midY); ctx.lineTo(x + width, midY); ctx.stroke();
-      const marks = [60, 120, 250, 500, 1000, 2000, 4000, 8000];
-      ctx.font = '10px system-ui'; ctx.fillStyle = '#52736f'; ctx.textAlign = 'center';
-      for (const hz of marks) {
-        if (hz < this.minHz || hz > this.maxHz) continue;
-        const px = x + Math.log(hz / this.minHz) / Math.log(this.maxHz / this.minHz) * width;
-        ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px, y + height); ctx.stroke();
-        if (labels) ctx.fillText(hz >= 1000 ? (hz / 1000) + 'k' : String(hz), px, y + height + 13);
-      }
-    }
+    // The spectrum floats on true black: no grid, labels, or frequency markings.
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(x, y, width, height);
+
+    // A very restrained central glow gives the mirrored display a luminous anchor.
+    const glow = ctx.createLinearGradient(0, midY - 12, 0, midY + 22);
+    glow.addColorStop(0, 'rgba(0,125,112,0)');
+    glow.addColorStop(0.48, 'rgba(0,125,112,0.16)');
+    glow.addColorStop(1, 'rgba(0,125,112,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x, midY - 12, width, 34);
+
     for (let i = 0; i < bands; i++) {
-      const bx = x + i * barW + gap / 2;
-      const bh = this.levels[i] * halfH;
-      const barWidth = Math.max(1, barW - gap);
-      // Each frequency band grows equally above and below the center axis.
-      ctx.fillStyle = '#007d70'; ctx.globalAlpha = 0.32;
-      ctx.fillRect(bx - 1, midY - bh - 2, barWidth + 2, bh * 2 + 4);
-      ctx.fillStyle = '#38d9c2'; ctx.globalAlpha = 0.94;
-      ctx.fillRect(bx, midY - bh, barWidth, bh);
-      ctx.fillRect(bx, midY, barWidth, bh);
-      const peakY = midY - this.peaks[i] * halfH;
-      ctx.fillStyle = '#b9fff5'; ctx.globalAlpha = 0.82;
-      ctx.fillRect(bx, peakY - 1, barWidth, 2);
-      ctx.fillRect(bx, midY + this.peaks[i] * halfH - 1, barWidth, 2);
+      const bx = x + i * slotW + (slotW - barW) / 2;
+      const active = Math.max(0, Math.min(1, this.levels[i]));
+      const peak = Math.max(active, this.peaks[i]);
+      const litSegments = Math.min(maxSegments, Math.round(active * maxSegments));
+      const peakSegment = Math.min(maxSegments, Math.round(peak * maxSegments));
+
+      // Soft teal halo behind the active column.
+      if (litSegments > 0) {
+        const top = midY - litSegments * (segmentH + segmentGap);
+        ctx.shadowColor = '#00bda9';
+        ctx.shadowBlur = 7;
+        ctx.fillStyle = 'rgba(0,125,112,0.5)';
+        ctx.fillRect(bx - 1, top - 1, barW + 2, litSegments * (segmentH + segmentGap) + 2);
+        ctx.shadowBlur = 0;
+      }
+
+      for (let s = 0; s < maxSegments; s++) {
+        const activeSeg = s < litSegments;
+        const peakSeg = s === peakSegment - 1;
+        const topY = midY - (s + 1) * (segmentH + segmentGap);
+        const bottomY = midY + s * (segmentH + segmentGap);
+
+        if (activeSeg) {
+          const intensity = 0.58 + 0.36 * (s / Math.max(1, litSegments));
+          ctx.fillStyle = `rgba(56,217,194,${intensity})`;
+          ctx.fillRect(bx, topY, barW, segmentH);
+          // Mirrored reflection: same shape, fading quickly into black.
+          ctx.fillStyle = `rgba(0,125,112,${0.22 * (1 - s / maxSegments)})`;
+          ctx.fillRect(bx, bottomY, barW, segmentH);
+        }
+        if (peakSeg) {
+          ctx.fillStyle = '#b9fff5';
+          ctx.fillRect(bx, topY - 1, barW, 2);
+          ctx.fillStyle = 'rgba(56,217,194,0.22)';
+          ctx.fillRect(bx, bottomY, barW, 2);
+        }
+      }
     }
     ctx.restore();
   }
