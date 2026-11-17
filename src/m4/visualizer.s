@@ -26,6 +26,7 @@
 .thumb_func
 visualizer_frame:                   @ r1 = 1 KB RX frame, called before stock receiver
     push {r0-r7, lr}
+    sub sp, #4                      @ keep the stack 8-byte aligned across this callback
     adr.w r4, visualizer_state
 
     @ Reject unrelated frames. The marker is the transport probe's established
@@ -61,6 +62,7 @@ visualizer_copy_band:
     bne visualizer_copy_band
 
 visualizer_frame_out:
+    add sp, #4
     pop {r0-r7, pc}
 
 @ Read-only state layout for the later Show View renderer:
