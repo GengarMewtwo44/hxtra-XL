@@ -75,66 +75,75 @@ export class AudioVisualizer {
   }
 
   draw(ctx, { x, y, width, height, time = 0, labels = false, grid = false } = {}) {
-    const bands = this.bandCount;
-    const midY = y + height * 0.48;
-    const halfH = Math.min(height * 0.44, midY - y);
-    const slotW = width / bands;
-    const barW = Math.max(2, slotW * 0.68);
-    const segmentGap = 2;
-    const segmentH = 4;
-    const maxSegments = Math.max(1, Math.floor(halfH / (segmentH + segmentGap)));
-
+    const bands = this.bandCount, gap = 1.25, barW = width / bands;
+    const midY = y + height / 2;
+    const halfH = height * 0.47;
     ctx.save();
-    // The spectrum floats on true black: no grid, labels, or frequency markings.
+
+    // Pure black field: no frequency labels, grid, or decorative background.
     ctx.fillStyle = '#000000';
     ctx.fillRect(x, y, width, height);
 
-    // A very restrained central glow gives the mirrored display a luminous anchor.
-    const glow = ctx.createLinearGradient(0, midY - 12, 0, midY + 22);
-    glow.addColorStop(0, 'rgba(0,125,112,0)');
-    glow.addColorStop(0.48, 'rgba(0,125,112,0.16)');
-    glow.addColorStop(1, 'rgba(0,125,112,0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(x, midY - 12, width, 34);
+    // A restrained center horizon gives the mirrored spectrum a visual anchor.
+    const horizon = ctx.createLinearGradient(x, midY, x + width, midY);
+    horizon.addColorStop(0, 'rgba(0,125,112,0)');
+    horizon.addColorStop(0.5, 'rgba(56,217,194,0.26)');
+    horizon.addColorStop(1, 'rgba(0,125,112,0)');
+    ctx.fillStyle = horizon;
+    ctx.fillRect(x, midY - 1, width, 2);
 
     for (let i = 0; i < bands; i++) {
-      const bx = x + i * slotW + (slotW - barW) / 2;
-      const active = Math.max(0, Math.min(1, this.levels[i]));
-      const peak = Math.max(active, this.peaks[i]);
-      const litSegments = Math.min(maxSegments, Math.round(active * maxSegments));
-      const peakSegment = Math.min(maxSegments, Math.round(peak * maxSegments));
+      const bx = x + i * barW + gap / 2;
+      const bw = Math.max(1, barW - gap);
+      const level = Math.max(0, Math.min(1, this.levels[i]));
+      const peak = Math.max(level, Math.min(1, this.peaks[i]));
+      const h = level * halfH;
+      const ph = peak * halfH;
+      if (h < 0.65 && ph < 1) continue;
 
-      // Soft teal halo behind the active column.
-      if (litSegments > 0) {
-        const top = midY - litSegments * (segmentH + segmentGap);
-        ctx.shadowColor = '#00bda9';
-        ctx.shadowBlur = 7;
-        ctx.fillStyle = 'rgba(0,125,112,0.5)';
-        ctx.fillRect(bx - 1, top - 1, barW + 2, litSegments * (segmentH + segmentGap) + 2);
-        ctx.shadowBlur = 0;
-      }
+      // Soft atmospheric bloom, then a darker extruded edge for depth.
+      ctx.save();
+      ctx.shadowColor = '#00a995';
+      ctx.shadowBlur = 5 + level * 13;
+      ctx.fillStyle = 'rgba(0,125,112,0.24)';
+      ctx.fillRect(bx - 1.5, midY - h - 2, bw + 3, h * 2 + 4);
+      ctx.restore();
 
-      for (let s = 0; s < maxSegments; s++) {
-        const activeSeg = s < litSegments;
-        const peakSeg = s === peakSegment - 1;
-        const topY = midY - (s + 1) * (segmentH + segmentGap);
-        const bottomY = midY + s * (segmentH + segmentGap);
+      // Dark side faces create a subtle beveled / 3D pillar appearance.
+      ctx.fillStyle = '#075b54';
+      ctx.fillRect(bx, midY - h, Math.max(1, bw * 0.22), h);
+      ctx.fillRect(bx, midY, Math.max(1, bw * 0.22), h);
+      ctx.fillStyle = '#087f73';
+      ctx.fillRect(bx + bw * 0.78, midY - h, Math.max(1, bw * 0.22), h);
+      ctx.fillRect(bx + bw * 0.78, midY, Math.max(1, bw * 0.22), h);
 
-        if (activeSeg) {
-          const intensity = 0.58 + 0.36 * (s / Math.max(1, litSegments));
-          ctx.fillStyle = `rgba(56,217,194,${intensity})`;
-          ctx.fillRect(bx, topY, barW, segmentH);
-          // Mirrored reflection: same shape, fading quickly into black.
-          ctx.fillStyle = `rgba(0,125,112,${0.22 * (1 - s / maxSegments)})`;
-          ctx.fillRect(bx, bottomY, barW, segmentH);
-        }
-        if (peakSeg) {
-          ctx.fillStyle = '#b9fff5';
-          ctx.fillRect(bx, topY - 1, barW, 2);
-          ctx.fillStyle = 'rgba(56,217,194,0.22)';
-          ctx.fillRect(bx, bottomY, barW, 2);
-        }
-      }
+      // Main luminous faces fade from deep teal at the outside to bright cyan at the core.
+      const upper = ctx.createLinearGradient(0, midY - h, 0, midY);
+      upper.addColorStop(0, '#08796f');
+      upper.addColorStop(0.48, '#18b9a7');
+      upper.addColorStop(1, '#8affee');
+      ctx.fillStyle = upper;
+      ctx.fillRect(bx + bw * 0.22, midY - h, Math.max(1, bw * 0.56), h);
+
+      const lower = ctx.createLinearGradient(0, midY, 0, midY + h);
+      lower.addColorStop(0, '#8affee');
+      lower.addColorStop(0.52, '#18b9a7');
+      lower.addColorStop(1, '#075b54');
+      ctx.fillStyle = lower;
+      ctx.fillRect(bx + bw * 0.22, midY, Math.max(1, bw * 0.56), h);
+
+      // Fine highlight on the inside edge sells the glass-like illuminated surface.
+      ctx.fillStyle = 'rgba(210,255,249,0.72)';
+      ctx.fillRect(bx + bw * 0.22, midY - h, Math.max(1, bw * 0.11), h);
+      ctx.fillRect(bx + bw * 0.22, midY, Math.max(1, bw * 0.11), h);
+
+      // Peak caps remain mirrored and decay smoothly after transients.
+      ctx.fillStyle = 'rgba(185,255,245,0.88)';
+      ctx.shadowColor = '#38d9c2';
+      ctx.shadowBlur = 4;
+      ctx.fillRect(bx, midY - ph - 1, bw, 1.5);
+      ctx.fillRect(bx, midY + ph - 0.5, bw, 1.5);
+      ctx.shadowBlur = 0;
     }
     ctx.restore();
   }
