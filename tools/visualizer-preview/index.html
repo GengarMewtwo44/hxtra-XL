@@ -19,7 +19,7 @@ select,input[type=range]{width:100%}select{background:#0a1114;color:#e8f1f2;bord
 </head>
 <body><main>
 <h1>HXtra XL · Audio Spectrum Visualizer</h1>
-<p class="sub">A frequency-based visualizer prototype with a reusable analysis and rendering core.</p>
+<p class="sub">A mirrored, segmented neon spectrum on pure black, with a reusable analysis and rendering core.</p>
 <div class="layout">
 <section class="panel"><div class="screen-wrap"><canvas id="screen" width="640" height="480"></canvas></div><div class="caption"><span>320 × 240 screen mock-up · doubled</span><span id="viewStatus">SHOW VIEW</span></div></section>
 <section class="panel">
@@ -68,10 +68,9 @@ function draw(){
   ['CLEAN','CRUNCH','LEAD','AMBIENT'].forEach((s,i)=>{let xx=22+i*151;ctx.fillStyle=i===1?'#173b37':'#182126';ctx.fillRect(xx,153,137,38);ctx.strokeStyle=i===1?'#38d9c2':'#425157';ctx.strokeRect(xx,153,137,38);ctx.fillStyle='#e3eeee';ctx.font='bold 14px system-ui';ctx.fillText(s,xx+13,177)});
   ctx.fillStyle='#65777c';ctx.font='11px system-ui';['FS1','FS2','FS3','FS4'].forEach((s,i)=>ctx.fillText(s,47+i*151,208));
   if(enabled){
-   ctx.fillStyle='#007d70';ctx.globalAlpha=.13;ctx.fillRect(25,230,590,164);ctx.globalAlpha=1;
-   ctx.fillStyle='#9bb5b3';ctx.font='11px system-ui';ctx.fillText('dB',25,246);
-   visualizer.draw(ctx,{x:34,y:255,width:572,height:116,labels:true,grid:true});
-   ctx.fillStyle='#38d9c2';ctx.font='11px system-ui';ctx.fillText('BASS',34,393);ctx.textAlign='right';ctx.fillText('TREBLE',606,393);ctx.textAlign='left';
+   // Pure-black spectrum area; the renderer owns the mirrored segmented display.
+   ctx.fillStyle='#000000';ctx.fillRect(20,225,600,184);
+   visualizer.draw(ctx,{x:28,y:232,width:584,height:168,labels:false,grid:false});
   }else{ctx.fillStyle='#526166';ctx.font='13px system-ui';ctx.fillText('AUDIO VISUALIZER OFF',24,315)}
  }else{
   ctx.fillStyle='#d5e0e1';ctx.font='17px system-ui';ctx.fillText('Amp parameters',25,166);ctx.fillStyle='#71858a';ctx.font='14px system-ui';ctx.fillText('Drive     Bass     Mid     Treble     Presence',25,196);
