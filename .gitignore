@@ -17,3 +17,18 @@ tools/*.hex
 *.mp4
 *.gif
 *.webp
+
+# Local firmware and large model files
+*.hxf
+*.gguf
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+
+# Python-generated files
+__pycache__/
+*.pyc
+.venv/
+venv/

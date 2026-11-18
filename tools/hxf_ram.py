@@ -108,8 +108,38 @@ def load(path, stock=False):
 
 
 def app_of(e0):
-    """The APPS entry (unit, eMMC functions, card) of a stock entry 0, or None."""
-    return APPS.get(zlib.crc32(e0[0x34:struct.unpack_from("<I", e0, 4)[0]]))
+    """Identify a supported stock application or a verified HXtra-XL 3.80 baseline."""
+    size = struct.unpack_from("<I", e0, 4)[0]
+    known = APPS.get(zlib.crc32(e0[0x34:size]))
+    if known is not None:
+        return known
+
+    # HXtra-XL changes the application CRC, so identify its XL baseline
+    # through both original eMMC function signatures and the card pointer.
+    xl_funcs = {
+        "read":  (0x28da82d4, 0x28da84dc),
+        "write": (0x28da8688, 0x28da8890),
+    }
+
+    def read_segment(addr, length):
+        for base, body in app_segments(e0)[0]:
+            if base <= addr and addr + length <= base + len(body):
+                return body[addr - base:addr - base + length]
+        return None
+
+    cards = []
+    for fn, lit in xl_funcs.values():
+        if read_segment(fn, len(PROLOGUE)) != PROLOGUE:
+            return None
+        raw = read_segment(lit, 4)
+        if raw is None:
+            return None
+        cards.append(struct.unpack("<I", raw)[0])
+
+    if cards == [0x281d211c, 0x281d211c]:
+        return ("HX Stomp XL", xl_funcs, 0x281d211c)
+
+    return None
 
 
 def app_segments(e0):
